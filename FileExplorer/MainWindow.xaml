@@ -40,5 +40,6 @@
                 </ListView.View>
             </ListView>
         </ScrollViewer>
+        <Button x:Name="ExportButton" Content="Export" HorizontalAlignment="Left" VerticalAlignment="Top" Width="75" Margin="47,1,0,0" Click="ExportButton_Click"/>
     </Grid>
 </Window>

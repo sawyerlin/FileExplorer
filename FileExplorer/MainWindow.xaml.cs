@@ -1,15 +1,9 @@
-﻿using Microsoft.Win32;
+﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Forms;
 
 namespace FileExplorer
@@ -24,6 +18,10 @@ namespace FileExplorer
             InitializeComponent();
         }
 
+        private const string Format = "The result is exported to: {0}";
+        private MenuItem _rootItem;
+
+
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             using (var folderBrowserDialog = new FolderBrowserDialog())
@@ -32,9 +30,9 @@ namespace FileExplorer
 
                 if (result == System.Windows.Forms.DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
                 {
-                    var root = BuildTreeView(folderBrowserDialog.SelectedPath);
+                    _rootItem = BuildTreeView(folderBrowserDialog.SelectedPath);
                     FETreeView.Items.Clear();
-                    FETreeView.Items.Add(root);
+                    FETreeView.Items.Add(_rootItem);
                 }
             }
         }
@@ -59,6 +57,29 @@ namespace FileExplorer
             }
             return item;
         }
+
+        private void ExportButton_Click(object sender, RoutedEventArgs e)
+        {
+            using (var folderBrowserDialog = new FolderBrowserDialog())
+            {
+                DialogResult result = folderBrowserDialog.ShowDialog();
+
+                if (result == System.Windows.Forms.DialogResult.OK && !string.IsNullOrWhiteSpace(folderBrowserDialog.SelectedPath))
+                {
+                    var exportPlace = Path.Combine(folderBrowserDialog.SelectedPath, string.Format("export_{0:yyyy-MM-dd-hh-mm-ss}.json", DateTime.Now));
+
+                    using (var file = File.CreateText(exportPlace))
+                    {
+                        var serializer = new JsonSerializer
+                        {
+                            Formatting = Formatting.Indented
+                        };
+                        serializer.Serialize(file, _rootItem);
+                        System.Windows.MessageBox.Show(string.Format(Format, exportPlace));
+                    }
+                }
+            }
+        }
     }
 
     public class MenuItem
@@ -68,8 +89,10 @@ namespace FileExplorer
             Items = new ObservableCollection<MenuItem>();
         }
 
+        [JsonProperty("Name")]
         public string Title { get; set; }
 
+        [JsonProperty("SubItems")]
         public ObservableCollection<MenuItem> Items { get; set; }
     }
 }
